@@ -1,4 +1,9 @@
 <!-- vim:filetype=xml 
+
+icy.cfg.sample
+this file should be copied to icy.cfg and edited to configure your bot,
+XXX - there are NO default values, missing keys WILL make the bot crash
+
 		 -->
 <xml>
 	<icecast>
