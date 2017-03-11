@@ -8,15 +8,15 @@ XXX - there are NO default values, missing keys WILL make the bot crash
 <xml>
 	<icecast>
 		<!--settings for icecast connection-->
-		<user>
+		<username>
 			<!--username for admin-->
-		</user>
-		<pass>
+		</username>
+		<password>
 			<!--pass for admin-->
-		</pass>
-		<host>
+		</password>
+		<hostname>
 			<!--hostname-->
-		</host>
+		</hostname>
 	</icecast>
 	<irc>
 		<!--settings for irc connection-->

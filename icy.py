@@ -12,7 +12,9 @@ import threading
 def x2d(element):
 	return {tag: text for (tag,text) in [(child.tag,child) for child in element]}
 
-def setcfg(obj,cfg):
+def setcfg(obj,cfg,*attrs):
+	cfg=x2d(cfg)
+	print(cfg.keys())
 	for attr in attrs:
 		if type(attr)==str:
 			val=cfg[attr].text
