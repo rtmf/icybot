@@ -17,19 +17,21 @@ def setcfg(obj,cfg,*attrs):
 	print(cfg.keys())
 	for attr in attrs:
 		if type(attr)==str:
-			val=cfg[attr].text
+			val=cfg[attr].text.strip()
+			name=attr
 		elif len(attr)==2:
-			val=[child.text for child in cfg[attr[0]].findall(attr[1])]
+			val=[child.text.strip() for child in cfg[attr[0]].findall(attr[1])]
+			name=attr[0]
 		elif len(attr)==3:
-			val={body: param for (body,param) in [(child.text,child.get(attr[2])) for child in cfg[attr[0]].findall(attr[1])]}
-		setattr(obj,"_%s"%attr,val)
+			val={body: param for (body,param) in [(child.text.strip(),child.get(attr[2])) for child in cfg[attr[0]].findall(attr[1])]}
+			name=attr[0]
+		setattr(obj,"_%s"%(name),val)
 				
 class Icecast:
 	def __init__(self,cfg):
-		#username,password,hostname):
-		self._cfg=x2d(cfg)
 		setcfg(self,cfg,"username","password","hostname")
-		self.__url__="http://%s:%s@%s/admin"%(username,password,hostname)
+		self.__url__="http://%s:%s@%s/admin"%(self._username,self._password,self._hostname)
+		print(self.__url__)
 
 	def call(self,function,args={},mount=None):
 		params=args
@@ -69,7 +71,7 @@ class RFHBot(irc.bot.SingleServerIRCBot):
 	def __init__(self,icy,cfg):
 		self._icy=icy
 		setcfg(self,cfg,"host","port","password","channel","nick","name","gangsign","joinMsg",("authors","author"),("access","user","level"),"prefix")
-		irc.bot.SingleServerIRCBot.__init__(self,[(self._host,self._port)],self._nick,self._name)
+		irc.bot.SingleServerIRCBot.__init__(self,[(self._host,int(self._port))],self._nick,self._name)
 
 	def on_privnotice(self, connection, event):
 		"""Identify to nickserv and log privnotices"""
