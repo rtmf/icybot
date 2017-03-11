@@ -1,0 +1,61 @@
+<!-- vim:filetype=xml 
+		 -->
+<xml>
+	<icecast>
+		<!--settings for icecast connection-->
+		<user>
+			<!--username for admin-->
+		</user>
+		<pass>
+			<!--pass for admin-->
+		</pass>
+		<host>
+			<!--hostname-->
+		</host>
+	</icecast>
+	<irc>
+		<!--settings for irc connection-->
+		<host>
+			<!--hostname-->
+		</host>
+		<port>
+			<!--port-->
+		</port>
+		<password>
+			<!--nickserv password-->
+		</password>
+		<channel>
+			<!--home channel-->
+		</channel>
+		<nick>
+			<!--bot nick-->
+		</nick>
+		<name>
+			<!--bot realname-->
+		</name>
+		<gangsign>
+			<!--think yerf, mew, fnord, etc.-->
+		</gangsign>
+		<joinMsg>
+			<!--message sent on entering any channel-->
+		</joinMsg>
+		<authors>
+			<!--feel free to add yourself if you contribute!-->
+			<author>
+				minx
+			</author>
+			<author>
+				RtMF
+			</author>
+		</authors>
+		<access>
+			<!--level '1' access required to join/part channels-->
+			<user level="1">
+				<!--it is advised to configure at least one admin, users match by nick-->
+			</user>
+		</access>
+		<prefix>
+			<!--additional command prefix beyond nick for bot-->
+		</prefix>
+	</irc>
+</xml>
