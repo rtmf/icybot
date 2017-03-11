@@ -119,8 +119,8 @@ class RFHBot(irc.bot.SingleServerIRCBot):
 			msg=getattr(self,"cmd_%s"%(cmd[0].lower()))(c,e,cmd[1:])
 		except AttributeError as a:
 			msg="?SYNTAX ERROR"
-		except o:
-			msg="?INTERNAL ERROR"
+		except Exception as e:
+			msg="?INTERNAL ERROR - %s"%str(e)
 		finally:
 			self.say(source,msg)
 	
@@ -141,7 +141,7 @@ class RFHBot(irc.bot.SingleServerIRCBot):
 
 	def cmd_join(self,c,e,args):
 		if e.source.nick in self._access:
-			if self._access[e.source.nick]>0:
+			if int(self._access[e.source.nick])>0:
 				for chan in args:
 						c.join(chan)
 						self.say(chan,self._joinMsg)
