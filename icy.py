@@ -6,8 +6,10 @@ import readline
 import time
 import irc.bot
 from datetime import datetime
+import icybot_cmd
 import random
 import threading
+import importlib
 
 def x2d(element):
 	return {tag: text for (tag,text) in [(child.tag,child) for child in element]}
@@ -72,6 +74,7 @@ class RFHBot(irc.bot.SingleServerIRCBot):
 		self._icy=icy
 		setcfg(self,cfg,"host","port","password","channel","nick","name","gangsign","joinMsg",("authors","author"),("access","user","level"),"prefix")
 		irc.bot.SingleServerIRCBot.__init__(self,[(self._host,int(self._port))],self._nick,self._name)
+		self._cmd = icybot_cmd.IcyBotCommands(self)
 
 	def on_privnotice(self, connection, event):
 		"""Identify to nickserv and log privnotices"""
@@ -103,60 +106,19 @@ class RFHBot(irc.bot.SingleServerIRCBot):
 		c.nick(c.get_nickname() + "_")
 	
 	def on_privmsg(self, c, e):
-		self.do_command(c, e, e.arguments[0],e.source.nick)
+		self._cmd.do_command(c, e, e.arguments[0], e.source.nick)
 	
 	def on_pubmsg(self, c, e):
 		lmsg = e.arguments[0].lower()
 		for trigger in [self._prefix] + [self._nick+suffix for suffix in [": ",", ",":",","," "]]:
 			if lmsg.startswith(trigger.lower()):
-				self.do_command(c,e,e.arguments[0][len(trigger):],e.target)
+				self._cmd.do_command(c,e,e.arguments[0][len(trigger):],e.target)
 				break
+
+	def reload_cmd(self):
+		importlib.reload(icybot_cmd)
+		self._cmd=icybot_cmd.IcyBotCommands(self)
 	
-	def do_command(self,c,e,cmd,source):
-		cmd=cmd.split(" ")
-		msg="?REDO FROM START"
-		try:
-			msg=getattr(self,"cmd_%s"%(cmd[0].lower()))(c,e,cmd[1:])
-		except AttributeError as a:
-			msg="?SYNTAX ERROR"
-		except Exception as e:
-			msg="?INTERNAL ERROR - %s"%str(e)
-		finally:
-			self.say(source,msg)
-	
-	def cmd_np(self,c,e,args):
-		return ", ".join(["-=|[%10s]|=- %s"%title for title in self._icy.title()])
-
-	def cmd_nl(self,c,e,args):
-		return "At least %s hoopty froods currently listening to the Horizon Singularity Sound!"%(((self._icy.stats())["listeners"]).text)
-
-	def cmd_ping(self,c,e,args):
-		return "Pong"
-
-	def cmd_time(self,c,e,args):
-		return "Date: %s"%(str(datetime.now()))
-
-	def cmd_coinflip(self,c,e,args):
-		return "Your coin flipped %s"%(["heads","tails"][int(random.random()*2)])
-
-	def cmd_join(self,c,e,args):
-		if e.source.nick in self._access:
-			if int(self._access[e.source.nick])>0:
-				for chan in args:
-						c.join(chan)
-						self.say(chan,self._joinMsg)
-				return "Joined %s."%(", ".join(args))
-
-	def cmd_part(self,c,e,args):
-		if e.source.nick in self._access:
-			if self._access[e.source.nick]>0:
-				for chan in args:
-						c.part(chan)
-				return "Parted %s."%(", ".join(args))
-
-	def cmd_motd(self,c,e,args):
-		return "Hello! I am "+ self._nick + " made partially by " + ", ".join(self._authors) + ", and many others who developed the F/OSS stack underneath me!"
-		
 	def on_welcome(self,c,e):
 		c.join(self._channel)
 		self.say(self._channel,self._joinMsg)
