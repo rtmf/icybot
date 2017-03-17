@@ -11,14 +11,17 @@ import importlib
 	
 def printTitles():
 	global icy,bot,cfg,ttl
-#	try:
-	titles=icy.title()
-	for title in titles:
-		print("-=|[%10s]|=- %s"%title)
-	#except:
-	#	print("ERROR\nERROR")
-	ttl=threading.Timer(1,printTitles)
-	ttl.start()
+	try:
+		titles=icy.title()
+		if len(titles)==0:
+			print("Nothing Playing :(")
+		for title in titles:
+			print("-=|[%10s]|=- %s"%title)
+	except:
+		print("ERROR")
+	finally:
+		ttl=threading.Timer(1,printTitles)
+		ttl.start()
 
 def reload_func(cmdonly=0):
 	global icy,bot,cfg,ttl

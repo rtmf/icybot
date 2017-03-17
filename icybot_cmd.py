@@ -14,7 +14,6 @@ class IcyBotCommands():
 		self._reload=reload_func
 		self._cmd=self.list_cmd()
 		self._access=bot._access
-		print (self._cmd)
 
 	def list_cmd(self):
 		return {cmd: info for (cmd,info) in (
@@ -29,7 +28,6 @@ class IcyBotCommands():
 			cmd=cmd.split(" ")
 			args=cmd[1:]
 			cmd=cmd[0].lower()
-			print("Command: [%s]"%(cmd))
 			if cmd in self._cmd:
 				alev=0
 				cinf=self._cmd[cmd]

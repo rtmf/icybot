@@ -5,7 +5,6 @@ class Icecast:
 	def __init__(self,cfg):
 		setcfg(self,cfg,"username","password","hostname")
 		self.__url__="http://%s:%s@%s/admin"%(self._username,self._password,self._hostname)
-		print(self.__url__)
 
 	def call(self,function,args={},mount=None):
 		params=args
