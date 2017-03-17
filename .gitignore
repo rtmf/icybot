@@ -1,3 +1,4 @@
 icy.cfg
 .*
 *~
+__pycache__
