@@ -56,8 +56,10 @@ XXX - there are NO default values, missing keys WILL make the bot crash
 		<access>
 			<!--level '1' access required to join/part channels-->
 			<user level="1">
-				<!--it is advised to configure at least one admin, users match by nick-->
+				<!--it is advised to configure at least one admin, users match regex to userhost-->
+				.*@net/user/admin
 			</user>
+			<!--level '2' access required to reload bot/cmds-->
 		</access>
 		<prefix>
 			<!--additional command prefix beyond nick for bot-->
