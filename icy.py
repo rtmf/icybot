@@ -34,20 +34,15 @@ def reload_func(cmdonly=0):
 	global icy,bot,cfg,ttl,bth
 	if (cmdonly==1):
 		importlib.reload(icybot_cmd)
-		bot._cmd=icybot_cmd.IcyBotCommands(bot,reload_func)
+		for ircbot in bot:
+			ircbot._cmd=icybot_cmd.IcyBotCommands(ircbot,reload_func)
 	else:
 		if bot is not None:
 			for ircbot in bot:
-				try:
-					ircbot.disconnect()
-					del ircbot
-				except:
-					pass
+				ircbot.disconnect()
+				del ircbot
 			for bthread in bth:
-				try:
-					del bthread
-				except:
-					pass
+				del bthread
 		del bot
 		del bth
 		del icy

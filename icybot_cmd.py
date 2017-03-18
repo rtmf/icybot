@@ -76,11 +76,8 @@ class IcyBotCommands():
 		return "Hello! I am "+ self._bot._nick + " made partially by " + ", ".join(self._bot._authors) + ", and many others who developed the F/OSS stack underneath me!"
 
 	def acmd_2_rebot(self,c,e,args):
-		if check_auth(e.source.nick,2):
-			self._reload()
-			return "Reloading ICYBot Code..."
-		else:
-			return "Not authorized!"
+		self._reload()
+		return "?UNREACHABLE MESSAGE"
 
 	def acmd_2_reload(self,c,e,args):
 		self._reload(1)
