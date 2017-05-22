@@ -50,7 +50,7 @@ class IcyBotCommands():
 		return ", ".join(["-=|[%10s]|=- %s"%title for title in self._bot._icy.title()])
 
 	def cmd_nl(self,c,e,args):
-		return "At least %s hoopty froods currently listening to the Horizon Singularity Sound!"%(((self._bot._icy.stats())["listeners"]).text)
+		return "At least %s hoopty froods currently listening to the Horizon Singularity Sound!"%(((self._bot._icy.stats())["listeners"])[1])
 
 	def cmd_ping(self,c,e,args):
 		return "Pong"

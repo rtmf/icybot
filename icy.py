@@ -70,6 +70,9 @@ def main():
 	bth=None
 	reload_func()
 
+def get_icy():
+	cfg = s2x(open('icy.cfg').read())
+	icy = icybot_icy.Icecast(cfg.find("icecast"))
 
 if __name__ == "__main__":
 	main()
