@@ -1,5 +1,5 @@
 from icybot_cfg import setcfg
-from icybot_xml import s2x
+from icybot_xml import s2x,x2d
 import requests
 class Icecast:
 	def __init__(self,cfg):

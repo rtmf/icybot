@@ -4,7 +4,7 @@ import icybot_cmd
 class RFHBot(irc.bot.SingleServerIRCBot):
 	def __init__(self,icy,cfg,reload_func):
 		self._icy=icy
-		setcfg(self,cfg,"host","port","password","channel","nick","name","gangsign","joinMsg",("authors","author"),("access","user","level"),"prefix")
+		setcfg(self,cfg,"host","port","password",("channels","channel"),"nick","name","gangsign","joinMsg",("authors","author"),("access","user","level"),"prefix")
 		irc.bot.SingleServerIRCBot.__init__(self,[(self._host,int(self._port))],self._nick,self._name)
 		self._cmd = icybot_cmd.IcyBotCommands(self,reload_func)
 
@@ -49,6 +49,7 @@ class RFHBot(irc.bot.SingleServerIRCBot):
 				break
 
 	def on_welcome(self,c,e):
-		c.join(self._channel)
-		self.say(self._channel,self._joinMsg)
+                for channel in self._channels:
+                    c.join(channel)
+                    self.say(channel,self._joinMsg)
 

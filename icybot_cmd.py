@@ -92,3 +92,5 @@ class IcyBotCommands():
 	def cmd_mark(self,c,e,args):
 		return "[rattling the chains reveals a message]: %s"%(xt.fromstring(requests.get('http://tymestl.org/~rtmf/mark.php').text).find("body").find("p").find("div").text)
 
+	def cmd_advert(self,c,e,args):
+		return "rfh: ♪Radio Free Horizon is ON THE AIR♪ | http://rfh.tymestl.org/500.ogg [HQ-500kbit vorbis] | http://rfh.tymestl.org/320.mp3  [LQ-320kbit mp3] | \"DJ\" RtMF in the...uh...patchbay - feel free to bug her with suggestions! | totally amateur | sometimes  awesome | often crashy | always weird | we're Musick for all Magick | {[Dark]Ice|Broad}casting direct from the Horizon  Singularity | ☮ ♥ 🌈 "
