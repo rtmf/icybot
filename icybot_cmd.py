@@ -44,7 +44,12 @@ class IcyBotCommands():
 		except Exception as e:
 			msg="?INTERNAL ERROR - %s"%str(e)
 		finally:
-			self._bot.say(source,msg)
+			if msg=="":
+				msg="?INTERNAL ERROR"
+			if type(msg)==type(""):
+				self._bot.say(source,msg)
+			elif type(msg)==type([]):
+				msg[0](msg[1],msg[2])
 	
 	def cmd_np(self,c,e,args):
 		return ", ".join(["-=|[%10s]|=- %s"%title for title in self._bot._icy.title()])
@@ -75,6 +80,13 @@ class IcyBotCommands():
 	def cmd_motd(self,c,e,args):
 		return "Hello! I am "+ self._bot._nick + " made partially by " + ", ".join(self._bot._authors) + ", and many others who developed the F/OSS stack underneath me!"
 
+	def acmd_2_me(self,c,e,args):
+		return [self._bot.do,args[0],' '.join(args[1:])]
+	#this is stupid.
+
+	def acmd_2_say(self,c,e,args):
+		return [self._bot.say,args[0],' '.join(args[1:])]
+
 	def acmd_2_rebot(self,c,e,args):
 		self._reload()
 		return "?UNREACHABLE MESSAGE"
@@ -82,6 +94,12 @@ class IcyBotCommands():
 	def acmd_2_reload(self,c,e,args):
 		self._reload(1)
 		return "Reloading ICYBot Commands..."
+
+	def acmd_2_eval(self,c,e,args):
+		try:
+			return str(eval(' '.join(args)))
+		except Exception as e:
+			return str(e)
 
 	def cmd_help(self,c,e,args):
 		return "Commands supported w/ access-level required, 0 is anyone: %s"%(str(["(%d):%s"%(self._cmd[cmd]["access"],cmd) for cmd in self._cmd.keys()]))
@@ -91,6 +109,12 @@ class IcyBotCommands():
 
 	def cmd_mark(self,c,e,args):
 		return "[rattling the chains reveals a message]: %s"%(xt.fromstring(requests.get('http://tymestl.org/~rtmf/mark.php').text).find("body").find("p").find("div").text)
+	
+	def cmd_ad(self,c,e,args):
+		return self.cmd_advert(c,e,args)
+	
+	def cmd_rfh(self,c,e,args):
+		return self.cmd_advert(c,e,args)
 
 	def cmd_advert(self,c,e,args):
 		return "rfh: ♪Radio Free Horizon is ON THE AIR♪ | http://rfh.tymestl.org/500.ogg [HQ-500kbit vorbis] | http://rfh.tymestl.org/320.mp3  [LQ-320kbit mp3] | \"DJ\" RtMF in the...uh...patchbay - feel free to bug her with suggestions! | totally amateur | sometimes  awesome | often crashy | always weird | we're Musick for all Magick | {[Dark]Ice|Broad}casting direct from the Horizon  Singularity | ☮ ♥ 🌈 "

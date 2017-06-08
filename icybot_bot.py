@@ -1,3 +1,4 @@
+# vim: set ts=2 sw=2 noexpandtab:
 import irc.bot
 from icybot_cfg import setcfg
 import icybot_cmd
@@ -18,7 +19,7 @@ class RFHBot(irc.bot.SingleServerIRCBot):
 				if self._nick == connection.get_nickname():
 					connection.privmsg("nickserv", "identify %s %s" % (self._nick, self._password))
 
-	def say(self,target,text):
+	def splitlong(self,target,text,func):
 		parts=[text[i:i+420] for i in range(0, len(text), 420)]
 		if len(parts)>1:
 			parts[0]=parts[0]+"…"
@@ -27,12 +28,16 @@ class RFHBot(irc.bot.SingleServerIRCBot):
 				parts[idx]="…"+parts[idx]+"…"
 		for part in parts:
 			try:
-				self.connection.privmsg(target,part)
+				func(target,part)
 			except irc.client.MessageTooLong as m:
 				pass
 
+
+	def say(self,target,text):
+		self.splitlong(target,text,self.connection.privmsg)
+
 	def do(self,target,text):
-		self.connection.action(target,text)
+		self.splitlong(target,text,self.connection.action)
 
 	def on_nicknameinuse(self, c, e):
 		c.nick(c.get_nickname() + "_")

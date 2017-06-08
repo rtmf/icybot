@@ -23,8 +23,9 @@ def printTitles():
 		ttl=threading.Timer(1,printTitles)
 		ttl.start()
 
-def runBot(ircbot):
+def runBot(ircbot,_bot):
 	try:
+		ircbot._bots=_bot
 		print(ircbot._host)
 		ircbot.start()
 	except:
@@ -55,7 +56,7 @@ def reload_func(cmdonly=0):
 		cfg = s2x(open('icy.cfg').read())
 		icy = icybot_icy.Icecast(cfg.find("icecast"))
 		bot = [icybot_bot.RFHBot(icy,irccfg,reload_func) for irccfg in cfg.findall("irc")]
-		bth = [threading.Thread(target=runBot,args=(ircbot,)) for ircbot in bot]
+		bth = [threading.Thread(target=runBot,args=(ircbot,bot)) for ircbot in bot]
 		for bthread in bth:
 			bthread.start()
 		printTitles()
