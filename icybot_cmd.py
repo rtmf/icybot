@@ -1,5 +1,7 @@
 # vim:sw=4:ts=4:noexpandtab
 import sys
+import io
+import contextlib
 import random
 import threading
 import time
@@ -7,6 +9,15 @@ import xml.etree.ElementTree as xt
 import requests
 import re
 import datetime
+
+@contextlib.contextmanager
+def stdoutIO(stdout=None):
+	old = sys.stdout
+	if stdout is None:
+		stdout = io.StringIO()
+	sys.stdout = stdout
+	yield stdout
+	sys.stdout = old
 
 class IcyBotCommands():
 	def __init__(self,bot,reload_func):
@@ -44,15 +55,22 @@ class IcyBotCommands():
 		except Exception as e:
 			msg="?INTERNAL ERROR - %s"%str(e)
 		finally:
-			if msg=="":
-				msg="?INTERNAL ERROR"
-			if type(msg)==type(""):
-				self._bot.say(source,msg)
-			elif type(msg)==type([]):
-				msg[0](msg[1],msg[2])
+			self._bot.irc(source,msg)
 	
 	def cmd_np(self,c,e,args):
 		return ", ".join(["-=|[%10s]|=- %s"%title for title in self._bot._icy.title()])
+	
+	def acmd_2_chan(self,c,e,args):
+		self._bot.setcontext(args[0])
+		return "set context to %s."%args[0]
+
+	def acmd_2_here(self,c,e,args):
+		self._bot.setcontext(None)
+		return "set context to follow source."
+
+	def acmd_2_wall(self,c,e,args):
+		self._bot.setcontext('allchan')
+		return "set context to all channels."
 
 	def cmd_nl(self,c,e,args):
 		return "At least %s hoopty froods currently listening to the Horizon Singularity Sound!"%(((self._bot._icy.stats())["listeners"])[1])
@@ -81,11 +99,10 @@ class IcyBotCommands():
 		return "Hello! I am "+ self._bot._nick + " made partially by " + ", ".join(self._bot._authors) + ", and many others who developed the F/OSS stack underneath me!"
 
 	def acmd_2_me(self,c,e,args):
-		return [self._bot.do,args[0],' '.join(args[1:])]
-	#this is stupid.
+		return '/me '+' '.join(args)
 
 	def acmd_2_say(self,c,e,args):
-		return [self._bot.say,args[0],' '.join(args[1:])]
+		return '/say '+' '.join(args)
 
 	def acmd_2_rebot(self,c,e,args):
 		self._reload()
@@ -97,9 +114,16 @@ class IcyBotCommands():
 
 	def acmd_2_eval(self,c,e,args):
 		try:
-			return str(eval(' '.join(args)))
+			return str(eval(u" ".join(args).replace('%n',"\n").replace('%%','%')))
 		except Exception as e:
 			return str(e)
+
+	def acmd_2_exec(self,c,e,args):
+		with stdoutIO() as s:
+			exec(u" ".join(args).replace('%n',"\n").replace('%%','%'))
+		output = s.getvalue()
+		print(output)
+		return output
 
 	def cmd_help(self,c,e,args):
 		return "Commands supported w/ access-level required, 0 is anyone: %s"%(str(["(%d):%s"%(self._cmd[cmd]["access"],cmd) for cmd in self._cmd.keys()]))

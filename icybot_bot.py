@@ -8,6 +8,7 @@ class RFHBot(irc.bot.SingleServerIRCBot):
 		setcfg(self,cfg,"host","port","password",("channels","channel"),"nick","name","gangsign","joinMsg",("authors","author"),("access","user","level"),"prefix")
 		irc.bot.SingleServerIRCBot.__init__(self,[(self._host,int(self._port))],self._nick,self._name)
 		self._cmd = icybot_cmd.IcyBotCommands(self,reload_func)
+		self._context = None
 
 	def on_privnotice(self, connection, event):
 		"""Identify to nickserv and log privnotices"""
@@ -20,6 +21,7 @@ class RFHBot(irc.bot.SingleServerIRCBot):
 					connection.privmsg("nickserv", "identify %s %s" % (self._nick, self._password))
 
 	def splitlong(self,target,text,func):
+		text=text.replace('\n','\\n')
 		parts=[text[i:i+420] for i in range(0, len(text), 420)]
 		if len(parts)>1:
 			parts[0]=parts[0]+"…"
@@ -32,6 +34,37 @@ class RFHBot(irc.bot.SingleServerIRCBot):
 			except irc.client.MessageTooLong as m:
 				pass
 
+	def irc(self,target,text):
+		try:
+			if self._context is not None:
+				context=self._context
+			else:
+				context=[(self,target)]
+			if len(text)==0:
+				return
+			if text[0]=='/':
+				cmd=text.split(' ',1)
+				for ircmd,ircfunc in [
+						('/action', 'do'),
+						('/me'    , 'do'),
+						('/say'   , 'say'),
+						]:
+					if ircmd.startswith(cmd[0]):
+						for bot,realtarget in context:
+							getattr(bot,ircfunc)(realtarget,cmd[1])
+						return
+			self.say(target,text)
+		except Exception as e:
+			self.say(target,"?INTERNAL ERROR - %s"%(str(e)))
+
+	def setcontext(self,context):
+		contexts=None
+		if context=='allchan':
+			contexts=[(bot,chan) for sublist in [[(bot,chan) for chan in bot._channels] for bot in self._bots] for (bot,chan) in sublist]
+		elif context is not None:
+			contexts=[(self,context)]
+		for bot in self._bots:
+			bot._context=contexts
 
 	def say(self,target,text):
 		self.splitlong(target,text,self.connection.privmsg)
