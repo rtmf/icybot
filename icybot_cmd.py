@@ -1,4 +1,5 @@
 # vim:sw=4:ts=4:noexpandtab
+import os
 import sys
 import io
 import contextlib
@@ -97,6 +98,11 @@ class IcyBotCommands():
 
 	def cmd_motd(self,c,e,args):
 		return "Hello! I am "+ self._bot._nick + " made partially by " + ", ".join(self._bot._authors) + ", and many others who developed the F/OSS stack underneath me!"
+
+	def acmd_2_play(self,c,e,args):
+		url=' '.join(args).replace('"','\\"')
+		os.system('chromix with "^https://[^/]*youtu[^/]*/" close;chromix load "%s"'%(url))
+		return "Told chromium to close all open tabs and load just \"%s\", it should be playing momentarily!"%(url)
 
 	def acmd_2_me(self,c,e,args):
 		return '/me '+' '.join(args)
