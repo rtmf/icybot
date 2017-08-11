@@ -101,7 +101,7 @@ class IcyBotCommands():
 
 	def acmd_2_play(self,c,e,args):
 		url=' '.join(args).replace('"','\\"')
-		os.system('chromix with "^https://[^/]*youtu[^/]*/" close;chromix load "%s"'%(url))
+		os.system('chromix with "^https://[^/]*soundcloud[^/]*/" close;chromix with "^https://[^/]*youtu[^/]*/" close;chromix load "%s"'%(url))
 		return "It should be playing momentarily..."
 
 	def acmd_2_me(self,c,e,args):
