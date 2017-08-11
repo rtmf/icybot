@@ -102,7 +102,7 @@ class IcyBotCommands():
 	def acmd_2_play(self,c,e,args):
 		url=' '.join(args).replace('"','\\"')
 		os.system('chromix with "^https://[^/]*youtu[^/]*/" close;chromix load "%s"'%(url))
-		return "Told chromium to close all open tabs and load just \"%s\", it should be playing momentarily!"%(url)
+		return "It should be playing momentarily..."
 
 	def acmd_2_me(self,c,e,args):
 		return '/me '+' '.join(args)
