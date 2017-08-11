@@ -99,9 +99,16 @@ class IcyBotCommands():
 	def cmd_motd(self,c,e,args):
 		return "Hello! I am "+ self._bot._nick + " made partially by " + ", ".join(self._bot._authors) + ", and many others who developed the F/OSS stack underneath me!"
 
+	def cmix_stop(self,then=""):
+		os.system('chromix with "^https://[^/]*soundcloud[^/]*/" close;chromix with "^https://[^/]*youtu[^/]*/" close;%s'%(then))
+
+	def acmd_2_stop(self,c,e,args):
+		self.cmix_stop()
+		return "Stopping anything currently playing..."
+
 	def acmd_2_play(self,c,e,args):
 		url=' '.join(args).replace('"','\\"')
-		os.system('chromix with "^https://[^/]*soundcloud[^/]*/" close;chromix with "^https://[^/]*youtu[^/]*/" close;chromix load "%s"'%(url))
+		self.cmix_stop('chromix load "%s"'%url)
 		return "It should be playing momentarily..."
 
 	def acmd_2_me(self,c,e,args):
