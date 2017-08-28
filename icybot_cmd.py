@@ -10,6 +10,38 @@ import xml.etree.ElementTree as xt
 import requests
 import re
 import datetime
+from apiclient.discovery import build
+from apiclient.errors import HttpError
+# Set DEVELOPER_KEY to the API key value from the APIs & auth > Registered apps
+# tab of
+#   https://cloud.google.com/console
+# Please ensure that you have enabled the YouTube Data API for your project.
+DEVELOPER_KEY = "AIzaSyA7RZ3GBfd97qIt6cBHnYQrnkY7mYgyt0c"
+YOUTUBE_API_SERVICE_NAME = "youtube"
+YOUTUBE_API_VERSION = "v3"
+
+def youtube_search(query):
+	youtube = build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION,
+		developerKey=DEVELOPER_KEY)
+
+	# Call the search.list method to retrieve results matching the specified
+	# query term.
+	search_response = youtube.search().list(
+		q=query,
+		part="snippet,id",
+		maxResults=1
+	).execute()
+
+	videos = []
+	channels = []
+	playlists = []
+
+	# Add each result to the appropriate list, and then display the lists of
+	# matching videos, channels, and playlists.
+	for search_result in search_response.get("items", []):
+		if search_result["id"]["kind"] == "youtube#video":
+			return "https://youtu.be/%s"%search_result["id"]["videoId"]
+	return None
 
 @contextlib.contextmanager
 def stdoutIO(stdout=None):
@@ -105,6 +137,10 @@ class IcyBotCommands():
 	def acmd_2_stop(self,c,e,args):
 		self.cmix_stop()
 		return "Stopping anything currently playing..."
+
+	def acmd_2_yt(self,c,e,args):
+		video=youtube_search(' '.join(args))
+		return "Found %s on YouTube.  %s"%(video,self.acmd_2_play(c,e,[video])) if video is not None else "Nothing found on YouTube for %s"%(' '.join(args))
 
 	def acmd_2_play(self,c,e,args):
 		url=' '.join(args).replace('"','\\"')
