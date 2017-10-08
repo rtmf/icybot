@@ -10,22 +10,23 @@ class ConfigValue:
     def val(self):
         return self._val
     def load(self):
-        print("[_%s]:%s"%(self._name,str(self.__des__())))
-        setattr(self._obj,"_%s"%self._name,self.__des__())
+        print("load[_%s]:%s"%(self._name,str(self.des())))
+        setattr(self._obj,"_%s"%self._name,self.des())
         print (type(self._obj))
     def save(self):
         self.ser(getattr(self._obj,"_%s"%self._name))
+        print("save[_%s]:%s"%(self._name,str(self.des())))
+        print (type(self._obj))
     def ent(self):
         return self.__ent__()
     def foc(self,node,name,**attr):
         ent=node.findall(name)
         if ent is None:
             ent = [cae(node,name,**attr)]
-            self.ser(self.defl())
         return ent
     def defl(self):
         return self._defl
-    def ded(self):
+    def des(self):
         return self.__des__()
     def ser(self,val):
         self.__ser__(val)
@@ -41,50 +42,31 @@ class ConfigList(ConfigValue):
         self._itemname=itemname
         self._itemdefl=itemdefl
     def __lis__(self):
-        return self.foc(self.ent(),self._name)
+        return self.foc(self.ent(),self._itemname)
     def lis(self):
         return self.__lis__()
-    def lsr(self,par,val):
-        return self.__lsr__(par,val)
-    def lds(self,lis,val):
-        return self.__lds__(lis,val)
-    def __lds__(self,lis,val):
-        return lis+[val.text.strip()]
-    def __lsr__(self,lis,val):
-        return cae(self.ent(),self._itemname,val)
+    def lsr(self,lis):
+        return self.__lsr__(lis)
+    def lds(self):
+        return self.__lds__()
+    def __lds__(self):
+        return [val.text.strip() for val in self.lis()]
+    def __lsr__(self,lis):
+        list([cae(self.ent(),self._itemname,val) for val in lis])
     def __des__(self):
-        lis=self.els()
-        for val in self.lis():
-            lis=self.lds(lis,val)
-        return lis
-    def __els__(self):
-        return []
-    def els(self):
-        return self.__els__()
+        return self.lds()
     def __ser__(self,lis):
         self.ent().clear()
-        for val in lis:
-            self.ent().append(self.lsr(lis,val))
+        self.lsr(lis)
 class ConfigDict(ConfigList):
-
     def __init__(self,configurable,name,defl,itemname,itemdefl,attrname,attrdefl):
         super().__init__(configurable,name,defl,itemname,itemdefl)
         self._attrname=attrname
         self._attrdefl=attrdefl
-    def __els__(self):
-        return {}
-    def __lsr__(self,dic,val):
-        ent=cae(self.ent(),self._itemname,val)
-        ent.set(self._attrname,dic[val])
-        return ent
-    def __lds__(self,dic,val):
-        body=val.text.strip()
-        attr=val.get(self._attrname)
-        if attr is None:
-            val.set(self._attrname,self._attrdefl)
-            attr=self._attrdefl
-        dic[body]=attr
-        return dic
+    def __lsr__(self,lis):
+        list([cae(self.ent(),self._itemname,key,{self._attrname:val}) for key,val in lis.items()])
+    def __lds__(self):
+        return {val.text.strip():(val.get(self._attrname) or self._attrdefl) for val in self.lis()}
 
 class Configurable:
     def __init__(self,conf,sect,indx=0):
