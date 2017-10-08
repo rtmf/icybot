@@ -95,7 +95,7 @@ class Icy:
 	def reload_func(self,cmdonly=0):
 		if (cmdonly==1):
 			importlib.reload(icybot_cmd)
-			for ircbot in bot:
+			for ircbot in self.bots():
 				ircbot._cmd=icybot_cmd.IcyBotCommands(ircbot,self)
 		else:
 			self.nobots()

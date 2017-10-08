@@ -161,13 +161,13 @@ class IcyBotCommands():
 		self._reload(1)
 		return "Reloading ICYBot Commands..."
 
-	def acmd_2_eval(self,c,e,args):
+	def acmd_3_eval(self,c,e,args):
 		try:
 			return str(eval(u" ".join(args).replace('%n',"\n").replace('%%','%')))
 		except Exception as e:
 			return str(e)
 
-	def acmd_2_exec(self,c,e,args):
+	def acmd_3_exec(self,c,e,args):
 		with stdoutIO() as s:
 			exec(u" ".join(args).replace('%n',"\n").replace('%%','%'))
 		output = s.getvalue()
