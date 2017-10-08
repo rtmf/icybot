@@ -1,38 +1,47 @@
 import icybot_xml
 from icybot_xml import *
-class ConfigEntity:
-    def __init__(self,configurable,cfg,attr):
-        self._attr=attr
+class ConfigValue:
+    def __init__(self,configurable,name,defl):
+        self._name=name
         self._obj=configurable
-        self._cfg=cfg
+        self._defl=defl
     def cfg(self):
-        return self._cfg
+        return self._obj._conf.getsec(self._obj)
     def val(self):
         return self._val
-    def att(self):
-        return ([self._attr] if type(self._attr)==str else self._attr)
-    def set(self):
-        print("[_%s]:%s"%(self.att()[0],str(self.__des__())))
-        setattr(self._obj,"_%s"%self.att()[0],self.__des__())
+    def load(self):
+        print("[_%s]:%s"%(self._name,str(self.__des__())))
+        setattr(self._obj,"_%s"%self._name,self.__des__())
         print (type(self._obj))
-    def get(self):
-        self.__ser__(getattr(self._obj,"_%s"%self.att()[0]))
+    def save(self):
+        self.ser(getattr(self._obj,"_%s"%self._name))
     def ent(self):
         return self.__ent__()
     def foc(self,node,name,**attr):
         ent=node.findall(name)
         if ent is None:
             ent = [cae(node,name,**attr)]
+            self.ser(self.defl())
         return ent
+    def defl(self):
+        return self._defl
+    def ded(self):
+        return self.__des__()
+    def ser(self,val):
+        self.__ser__(val)
     def __ent__(self):
-        return self.foc(self.cfg(),self.att()[0])[0]
+        return self.foc(self.cfg(),self._name)[0]
     def __des__(self):
         return self.ent().text.strip()
     def __ser__(self,val):
         self.ent().text=str(val)
-class ConfigList(ConfigEntity):
+class ConfigList(ConfigValue):
+    def __init__(self,configurable,name,defl,itemname,itemdefl):
+        super().__init__(configurable,name,defl)
+        self._itemname=itemname
+        self._itemdefl=itemdefl
     def __lis__(self):
-        return self.foc(self.ent(),self.att()[1])
+        return self.foc(self.ent(),self._name)
     def lis(self):
         return self.__lis__()
     def lsr(self,par,val):
@@ -42,7 +51,7 @@ class ConfigList(ConfigEntity):
     def __lds__(self,lis,val):
         return lis+[val.text.strip()]
     def __lsr__(self,lis,val):
-        return cae(self.ent(),self.att()[1],val)
+        return cae(self.ent(),self._itemname,val)
     def __des__(self):
         lis=self.els()
         for val in self.lis():
@@ -57,18 +66,23 @@ class ConfigList(ConfigEntity):
         for val in lis:
             self.ent().append(self.lsr(lis,val))
 class ConfigDict(ConfigList):
+
+    def __init__(self,configurable,name,defl,itemname,itemdefl,attrname,attrdefl):
+        super().__init__(configurable,name,defl,itemname,itemdefl)
+        self._attrname=attrname
+        self._attrdefl=attrdefl
     def __els__(self):
         return {}
     def __lsr__(self,dic,val):
-        ent=cae(self.ent(),self.att()[1],val)
-        ent.set(self.att()[2],dic[val])
+        ent=cae(self.ent(),self._itemname,val)
+        ent.set(self._attrname,dic[val])
         return ent
     def __lds__(self,dic,val):
         body=val.text.strip()
-        attr=val.get(self.att()[2])
+        attr=val.get(self._attrname)
         if attr is None:
-            val.set(self.att()[2],"")
-            attr=""
+            val.set(self._attrname,self._attrdefl)
+            attr=self._attrdefl
         dic[body]=attr
         return dic
 
@@ -77,6 +91,8 @@ class Configurable:
         self._conf=None
         self._sect=sect
         self._indx=indx
+        self._vars=[]
+        self.schema()
         self.newcfg(conf)
     def __conf__(self):
         pass
@@ -102,29 +118,33 @@ class Configurable:
         return getattr(self,"_%s"%(name))
     def setval(self,name,val):
         setattr(self,"_%s"%(name),val)
-    def cfgent(self,cfg,attr):
-        if type(attr)==str:
-            return ConfigEntity(self,cfg,[attr])
-        elif len(attr)==2:
-            return ConfigList(self,cfg,attr)
-        elif len(attr)==3:
-            return ConfigDict(self,cfg,attr)
+    def value(self,name,defl=""):
+        self._vars+=[ConfigValue(self,name,defl)]
+        return self
+    def list(self,name,itemname,defl=[],itemdefl=""):
+        self._vars+=[ConfigList(self,name,defl,itemname,itemdefl)]
+        return self
+    def dict(self,name,itemname,attrname,defl={},itemdefl="",attrdefl=""):
+        self._vars+=[ConfigDict(self,name,defl,itemname,itemdefl,attrname,attrdefl)]
+        return self
     def setcfg(self):
-        cfg=self._conf.getsec(self)
-        for attr in self.attr():
-            self.cfgent(cfg,attr).set()
+        list([var.load() for var in self.cfgvars()])
         self.conf()
     def getcfg(self):
         self.sync()
-        cfg=self._conf.getsec(self)
-        for attr in self.__attr__():
-            self.cfgent(cfg,attr).get()
+        list([var.save() for var in self.cfgvars()])
     def indx(self):
         return self.__indx__()
     def sect(self):
         return self.__sect__()
-    def attr(self):
-        return self.__attr__()
+    def cfgvars(self):
+        return self.__vars__()
+    def schema(self):
+        self.__schema__()
+    def __vars__(self):
+        return self._vars
+    def __schema__(self):
+        pass
     def __indx__(self):
         return self._indx
     def __sect__(self):
@@ -146,7 +166,7 @@ class Configuration:
     def loadcfg(self,path):
         try:
             conf=s2x(open(path).read())
-        except e:
+        except Exception as e:
             self._path=None
         else:
             self._conf=conf

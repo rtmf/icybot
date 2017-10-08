@@ -110,6 +110,7 @@ class Icy:
 			self.mkice()
 			self.mktit()
 			self.mkbots()
+			self.cfg().savcfg()
 
 def main():
 	ibt=Icy()

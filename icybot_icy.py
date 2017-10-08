@@ -2,8 +2,8 @@ import icybot_cfg
 from icybot_xml import s2x,x2d
 import requests
 class Icecast(icybot_cfg.Configurable):
-    def __attr__(self):
-        return ["username","password","hostname"]
+    def __schema__(self):
+        self.value("username","icybot").value("password").value("hostname")
     def __conf__(self):
         self.__url__="http://%s:%s@%s/admin"%(self._username,self._password,self._hostname)
     def call(self,function,args={},mount=None):
