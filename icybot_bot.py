@@ -1,14 +1,41 @@
 # vim: set ts=2 sw=2 noexpandtab:
 import irc.bot
-from icybot_cfg import setcfg
+import icybot_cfg
 import icybot_cmd
-class RFHBot(irc.bot.SingleServerIRCBot):
-	def __init__(self,icy,cfg,reload_func):
+import threading
+class RFHBot(irc.bot.SingleServerIRCBot,icybot_cfg.Configurable):
+	def __attr__(self):
+		return ["host","port","password",("channels","channel"),"nick","name","gangsign","joinMsg",("authors","author"),("access","user","level"),"prefix"]
+	def runthread(self):
+		if self._thread is not None:
+			self.die()
+		else:
+			self._reaper=None
+			self._thread=threading.Thread(target=self._icy.runBot,args=[self])
+			self._thread.start()
+		return self
+	def delthread(self):
+		self.die()
+		if self._thread is not None and self._reaper is None:
+			self._reaper = threading.Thread(target=self.diethread,args=())
+			self._reaper.start()
+	def diethread(self):
+		secs=0
+		while(self._thread.is_alive()):
+			print("Waiting for bot on host %s to die %d seconds elapsed."%(self._host,secs))
+			self._thread.join(1)
+			secs+=1
+		print("Bot thread died for host %s, so will the reaper thread!"%host)
+	def __init__(self,conf,sect,indx):
+		icybot_cfg.Configurable.__init__(self,conf,sect,indx)
+	def setup(self,icy):
+		self._thread=None
 		self._icy=icy
-		setcfg(self,cfg,"host","port","password",("channels","channel"),"nick","name","gangsign","joinMsg",("authors","author"),("access","user","level"),"prefix")
+		self.setcfg()
 		irc.bot.SingleServerIRCBot.__init__(self,[(self._host,int(self._port))],self._nick,self._name)
-		self._cmd = icybot_cmd.IcyBotCommands(self,reload_func)
+		self._cmd = icybot_cmd.IcyBotCommands(self,icy.reload_func)
 		self._context = None
+		return self
 
 	def on_privnotice(self, connection, event):
 		"""Identify to nickserv and log privnotices"""
@@ -60,10 +87,10 @@ class RFHBot(irc.bot.SingleServerIRCBot):
 	def setcontext(self,context):
 		contexts=None
 		if context=='allchan':
-			contexts=[(bot,chan) for sublist in [[(bot,chan) for chan in bot._channels] for bot in self._bots] for (bot,chan) in sublist]
+			contexts=[(bot,chan) for sublist in [[(bot,chan) for chan in bot._channels] for bot in self._icy.bots()] for (bot,chan) in sublist]
 		elif context is not None:
 			contexts=[(self,context)]
-		for bot in self._bots:
+		for bot in self._icy.bots():
 			bot._context=contexts
 
 	def say(self,target,text):

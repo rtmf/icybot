@@ -91,7 +91,7 @@ class IcyBotCommands():
 			self._bot.irc(source,msg)
 	
 	def cmd_np(self,c,e,args):
-		return ", ".join(["-=|[%10s]|=- %s"%title for title in self._bot._icy.title()])
+		return ", ".join(["-=|[%10s]|=- %s"%title for title in self._bot._icy.ice().title()])
 	
 	def acmd_2_chan(self,c,e,args):
 		self._bot.setcontext(args[0])
@@ -106,7 +106,7 @@ class IcyBotCommands():
 		return "set context to all channels."
 
 	def cmd_nl(self,c,e,args):
-		return "At least %s hoopty froods currently listening to the Horizon Singularity Sound!"%(((self._bot._icy.stats())["listeners"])[1])
+		return "At least %s hoopty froods currently listening to the Horizon Singularity Sound!"%(((self._bot._icy.ice().stats())["listeners"])[1])
 
 	def cmd_ping(self,c,e,args):
 		return "Pong"
