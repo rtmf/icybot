@@ -13,14 +13,23 @@ class IcyTitles():
 		self._reaper=None
 		self._running=True
 		self._timer=None
+		self._titles=None
 		self.printTitles()
-	def printTitles(self):
-		try:
+	def title(self):
 			titles=self._icy.ice().title()
 			if len(titles)==0:
-				print("Nothing Playing :(")
-			for title in titles:
-				print("-=|[%10s]|=- %s"%title)
+				titles="Nothing Playing :("
+			else:
+				titles=titles[0][1]
+			if titles!=self._titles:
+				self._titles=titles
+				for bot in self._icy._bot:
+					for chan in bot._channels:
+						bot.do(chan,"is now playing: %s"%titles)
+			return self._titles
+	def printTitles(self):
+		try:
+			print(self.title())
 		except:
 			print("ERROR")
 		finally:
@@ -50,7 +59,7 @@ class Icy:
 			print(ircbot._host)
 			ircbot.start()
 		except:
-			reload_func()
+			self.reload_func()
 	def __init__(self):
 		self._ice=None
 		self._tit=None
@@ -88,6 +97,8 @@ class Icy:
 		self._ice = icybot_icy.Icecast(self.cfg(),"icecast",0)
 	def ice(self):
 		return self._ice
+	def tit(self):
+		return self._tit
 	def mkbots(self):
 		self._bot = [bot.setup(self).runthread() for bot in icybot_cfg.ConfigurableFactory(self.cfg(),"irc",icybot_bot.RFHBot)]
 	def bots(self):

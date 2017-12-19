@@ -91,7 +91,7 @@ class IcyBotCommands():
 			self._bot.irc(source,msg)
 	
 	def cmd_np(self,c,e,args):
-		return ", ".join(["-=|[%10s]|=- %s"%title for title in self._bot._icy.ice().title()])
+		return "Now Playing: %s"%self._bot._icy.tit().title()
 	
 	def acmd_2_chan(self,c,e,args):
 		self._bot.setcontext(args[0])
@@ -180,8 +180,8 @@ class IcyBotCommands():
 	def cmd_access(self,c,e,args):
 		return "Access levels granted by regexes: %s"%(str(self._access))
 
-	def cmd_mark(self,c,e,args):
-		return "[rattling the chains reveals a message]: %s"%(xt.fromstring(requests.get('http://tymestl.org/~rtmf/mark.php').text).find("body").find("p").find("div").text)
+	def cmd_lucy(self,c,e,args):
+		return "[rattling the chains reveals a message]: %s"%(xt.fromstring(requests.get('http://tymestl.org/~rtmf/lucy.php').text).find("body").find("p").find("div").text)
 	
 	def cmd_ad(self,c,e,args):
 		return self.cmd_advert(c,e,args)
