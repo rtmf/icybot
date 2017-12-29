@@ -20,7 +20,7 @@ DEVELOPER_KEY = "AIzaSyA7RZ3GBfd97qIt6cBHnYQrnkY7mYgyt0c"
 YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
 
-def youtube_search(query):
+def youtube_search(query,offset=0):
 	youtube = build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION,
 		developerKey=DEVELOPER_KEY)
 
@@ -29,7 +29,7 @@ def youtube_search(query):
 	search_response = youtube.search().list(
 		q=query,
 		part="snippet,id",
-		maxResults=1
+		maxResults=50
 	).execute()
 
 	videos = []
@@ -40,7 +40,10 @@ def youtube_search(query):
 	# matching videos, channels, and playlists.
 	for search_result in search_response.get("items", []):
 		if search_result["id"]["kind"] == "youtube#video":
-			return "https://youtu.be/%s"%search_result["id"]["videoId"]
+			if offset > 0:
+				offset -= 1
+			else:
+				return "https://youtu.be/%s"%search_result["id"]["videoId"]
 	return None
 
 @contextlib.contextmanager
@@ -140,6 +143,11 @@ class IcyBotCommands():
 
 	def acmd_2_yt(self,c,e,args):
 		video=youtube_search(' '.join(args))
+		return "Found %s on YouTube.  %s"%(video,self.acmd_2_play(c,e,[video])) if video is not None else "Nothing found on YouTube for %s"%(' '.join(args))
+
+	def acmd_2_yo(self,c,e,args):
+		offset=int(args[0])
+		video=youtube_search(' '.join(args[1:]),offset)
 		return "Found %s on YouTube.  %s"%(video,self.acmd_2_play(c,e,[video])) if video is not None else "Nothing found on YouTube for %s"%(' '.join(args))
 
 	def acmd_2_play(self,c,e,args):
