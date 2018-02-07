@@ -199,3 +199,9 @@ class IcyBotCommands():
 
 	def cmd_advert(self,c,e,args):
 		return "rfh: ♪Radio Free Horizon is ON THE AIR♪ | http://rfh.tymestl.org/500.ogg [HQ-500kbit vorbis] | http://rfh.tymestl.org/320.mp3  [LQ-320kbit mp3] | \"DJ\" RtMF in the...uh...patchbay - feel free to bug her with suggestions! | totally amateur | sometimes  awesome | often crashy | always weird | we're Musick for all Magick | {[Dark]Ice|Broad}casting direct from the Horizon  Singularity | ☮ ♥ 🌈 "
+	def acmd_1_p(self,c,e,args):
+		return self.acmd_2_play(c,e,args)
+	def acmd_2_y(self,c,e,args):
+		return self.acmd_2_yt(c,e,args)
+	def acmd_2_o(self,c,e,args):
+		return self.acmd_2_yo(c,e,args)
