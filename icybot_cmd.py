@@ -10,6 +10,7 @@ import xml.etree.ElementTree as xt
 import requests
 import re
 import datetime
+import optparse
 from apiclient.discovery import build
 from apiclient.errors import HttpError
 # Set DEVELOPER_KEY to the API key value from the APIs & auth > Registered apps
@@ -61,6 +62,8 @@ class IcyBotCommands():
 		self._reload=reload_func
 		self._cmd=self.list_cmd()
 		self._access=bot._access
+		self.ytparser=optparse.OptionParser()
+		self.ytparser.add_option("-o","--offset",dest="offset",default=0,help="return search result NUM (starting from 0)",metavar="NUM")
 
 	def list_cmd(self):
 		return {cmd: info for (cmd,info) in (
@@ -142,7 +145,8 @@ class IcyBotCommands():
 		return "Stopping anything currently playing..."
 
 	def acmd_2_yt(self,c,e,args):
-		video=youtube_search(' '.join(args))
+		(options,args)=self.ytparser.parse_args(args)
+		video=youtube_search(' '.join(args),int(options.offset))
 		return "Found %s on YouTube.  %s"%(video,self.acmd_2_play(c,e,[video])) if video is not None else "Nothing found on YouTube for %s"%(' '.join(args))
 
 	def acmd_2_yo(self,c,e,args):
