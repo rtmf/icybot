@@ -23,9 +23,9 @@ class IcyTitles():
 				titles=titles[0][1]
 			if titles!=self._titles:
 				self._titles=titles
-				for bot in self._icy._bot:
-					for chan in bot._channels:
-						bot.do(chan,"is now playing: %s"%titles)
+#				for bot in self._icy._bot:
+#					for chan in bot._channels:
+#						bot.do(chan,"is now playing: %s"%titles)
 			return self._titles
 	def printTitles(self):
 		try:
@@ -107,7 +107,7 @@ class Icy:
 		if (cmdonly==1):
 			importlib.reload(icybot_cmd)
 			for ircbot in self.bots():
-				ircbot._cmd=icybot_cmd.IcyBotCommands(ircbot,self)
+				ircbot._cmd=icybot_cmd.IcyBotCommands(ircbot,self.reload_func)
 		else:
 			self.nobots()
 			self.notit()

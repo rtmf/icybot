@@ -10,7 +10,8 @@ import xml.etree.ElementTree as xt
 import requests
 import re
 import datetime
-import optparse
+import argparse
+import traceback
 from apiclient.discovery import build
 from apiclient.errors import HttpError
 # Set DEVELOPER_KEY to the API key value from the APIs & auth > Registered apps
@@ -20,8 +21,27 @@ from apiclient.errors import HttpError
 DEVELOPER_KEY = "AIzaSyA7RZ3GBfd97qIt6cBHnYQrnkY7mYgyt0c"
 YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
+class cmdArgParser(argparse.ArgumentParser):
+	def parse_args(self,args):
+		ret=None
+		try:
+			self.errorMessage=None
+			ret=super().parse_args(args)
+		except TypeError:
+			ret=self.format_usage()
+		if self.errorMessage is not None:
+			return self.errorMessage
+		elif ret is None:
+			return self.format_usage()
+		else:
+			return ret
+	def error(self,message):
+		self.errorMessage=message
+	def exit(self,status=0,message=None):
+		self.errorMessage=message
+		raise TypeError
 
-def youtube_search(query,offset=0):
+def youtube_search(query,offset=0,length="long",order="date"):
 	youtube = build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION,
 		developerKey=DEVELOPER_KEY)
 
@@ -30,7 +50,10 @@ def youtube_search(query,offset=0):
 	search_response = youtube.search().list(
 		q=query,
 		part="snippet,id",
-		maxResults=50
+		maxResults=50,
+		order=order,
+		type="video",
+		videoDuration=length
 	).execute()
 
 	videos = []
@@ -62,8 +85,11 @@ class IcyBotCommands():
 		self._reload=reload_func
 		self._cmd=self.list_cmd()
 		self._access=bot._access
-		self.ytparser=optparse.OptionParser()
-		self.ytparser.add_option("-o","--offset",dest="offset",default=0,help="return search result NUM (starting from 0)",metavar="NUM")
+		self.ytparser=cmdArgParser("YouTube Search Plugin")
+		self.ytparser.add_argument("-o","--offset",nargs=1,dest="offset",default=[0],help="return search result NUM (starting from 0)",metavar="NUM",type=int)
+		self.ytparser.add_argument("keywords",nargs="*",default=[],metavar="KEYWORD",help="keywords for the search")
+		self.ytparser.add_argument("-s","--sort",metavar=("ORDER"), nargs=1,default=["date"],choices=["date","rating","relevance","title","videoCount","viewCount"],help="sort order for results",dest="sort")
+		self.ytparser.add_argument("-l","--length",nargs=1,metavar=("LEN"),default=["any"],choices=["any","long","medium","short"],dest="length")
 
 	def list_cmd(self):
 		return {cmd: info for (cmd,info) in (
@@ -92,6 +118,7 @@ class IcyBotCommands():
 			else:
 				msg="?SYNTAX ERROR"
 		except Exception as e:
+			traceback.print_exc()
 			msg="?INTERNAL ERROR - %s"%str(e)
 		finally:
 			self._bot.irc(source,msg)
@@ -145,13 +172,10 @@ class IcyBotCommands():
 		return "Stopping anything currently playing..."
 
 	def acmd_2_yt(self,c,e,args):
-		(options,args)=self.ytparser.parse_args(args)
-		video=youtube_search(' '.join(args),int(options.offset))
-		return "Found %s on YouTube.  %s"%(video,self.acmd_2_play(c,e,[video])) if video is not None else "Nothing found on YouTube for %s"%(' '.join(args))
-
-	def acmd_2_yo(self,c,e,args):
-		offset=int(args[0])
-		video=youtube_search(' '.join(args[1:]),offset)
+		options=self.ytparser.parse_args(args)
+		if type(options)==str:
+			return options
+		video=youtube_search(' '.join(options.keywords),int(options.offset[0]),order=options.sort[0],length=options.length[0])
 		return "Found %s on YouTube.  %s"%(video,self.acmd_2_play(c,e,[video])) if video is not None else "Nothing found on YouTube for %s"%(' '.join(args))
 
 	def acmd_2_play(self,c,e,args):
