@@ -22,17 +22,17 @@ DEVELOPER_KEY = "AIzaSyA7RZ3GBfd97qIt6cBHnYQrnkY7mYgyt0c"
 YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
 class cmdArgParser(argparse.ArgumentParser):
-	def parse_args(self,args):
+	def parse_known_args(self,args):
 		ret=None
 		try:
 			self.errorMessage=None
-			ret=super().parse_args(args)
+			ret=super().parse_known_args(args)
 		except TypeError:
-			ret=self.format_usage()
+			ret=(self.format_usage(),args)
 		if self.errorMessage is not None:
-			return self.errorMessage
+			return (self.errorMessage,args)
 		elif ret is None:
-			return self.format_usage()
+			return (self.format_usage(),args)
 		else:
 			return ret
 	def error(self,message):
@@ -85,7 +85,7 @@ class IcyBotCommands():
 		self._reload=reload_func
 		self._cmd=self.list_cmd()
 		self._access=bot._access
-		self.ytparser=cmdArgParser("YouTube Search Plugin")
+		self.ytparser=cmdArgParser("yt")
 		self.ytparser.add_argument("-o","--offset",nargs=1,dest="offset",default=[0],help="return search result NUM (starting from 0)",metavar="NUM",type=int)
 		self.ytparser.add_argument("keywords",nargs="*",default=[],metavar="KEYWORD",help="keywords for the search")
 		self.ytparser.add_argument("-s","--sort",metavar=("ORDER"), nargs=1,default=["date"],choices=["date","rating","relevance","title","videoCount","viewCount"],help="sort order for results",dest="sort")
@@ -121,7 +121,8 @@ class IcyBotCommands():
 			traceback.print_exc()
 			msg="?INTERNAL ERROR - %s"%str(e)
 		finally:
-			self._bot.irc(source,msg)
+			for line in msg.split("\n"):
+				self._bot.irc(source,line)
 	
 	def cmd_np(self,c,e,args):
 		return "Now Playing: %s"%self._bot._icy.tit().title()
@@ -172,11 +173,11 @@ class IcyBotCommands():
 		return "Stopping anything currently playing..."
 
 	def acmd_2_yt(self,c,e,args):
-		options=self.ytparser.parse_args(args)
+		(options, args)=self.ytparser.parse_known_args(args)
 		if type(options)==str:
 			return options
-		video=youtube_search(' '.join(options.keywords),int(options.offset[0]),order=options.sort[0],length=options.length[0])
-		return "Found %s on YouTube.  %s"%(video,self.acmd_2_play(c,e,[video])) if video is not None else "Nothing found on YouTube for %s"%(' '.join(args))
+		video=youtube_search(' '.join(options.keywords+args),int(options.offset[0]),order=options.sort[0],length=options.length[0])
+		return "Found %s on YouTube.  %s"%(video,self.acmd_2_play(c,e,[video])) if video is not None else "Nothing found on YouTube for %s"%(' '.join(options.keywords+args))
 
 	def acmd_2_play(self,c,e,args):
 		url=' '.join(args).replace('"','\\"')
