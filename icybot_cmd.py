@@ -79,23 +79,42 @@ def stdoutIO(stdout=None):
 	yield stdout
 	sys.stdout = old
 
+global _cmd
+def icy_register_command(access,func):
+	print("icy_register_command(%d,%s)"%(access,repr(func)))
+	global _cmd
+	cinf={
+		"func":func,
+		"access":access
+		}
+	global _cmd
+	try:
+		_cmd[func.__name__]=cinf
+	except NameError:
+		_cmd={func.__name__:cinf}
+def icy_command(access=0):
+	if callable(access):
+		return (icy_command_decorator(0))(access)
+	else:
+		return icy_command_decorator(access)
+def icy_command_decorator(access):
+	def icy_decorator(func):
+		icy_register_command(access,func)
+		return func
+	return icy_decorator
+	
 class IcyBotCommands():
 	def __init__(self,bot,reload_func):
+		global _cmd
+		self._cmd=_cmd
 		self._bot=bot
 		self._reload=reload_func
-		self._cmd=self.list_cmd()
 		self._access=bot._access
 		self.ytparser=cmdArgParser("yt")
 		self.ytparser.add_argument("-o","--offset",nargs=1,dest="offset",default=[0],help="return search result NUM (starting from 0)",metavar="NUM",type=int)
 		self.ytparser.add_argument("keywords",nargs="*",default=[],metavar="KEYWORD",help="keywords for the search")
 		self.ytparser.add_argument("-s","--sort",metavar=("ORDER"), nargs=1,default=["date"],choices=["date","rating","relevance","title","videoCount","viewCount"],help="sort order for results",dest="sort")
 		self.ytparser.add_argument("-l","--length",nargs=1,metavar=("LEN"),default=["any"],choices=["any","long","medium","short"],dest="length")
-
-	def list_cmd(self):
-		return {cmd: info for (cmd,info) in (
-			[(cmd[4:],{"access":0,"func":getattr(self,cmd)}) for cmd in dir(self) if cmd.startswith("cmd_")] + 
-			[(cmd[2],{"access":int(cmd[1]),"func":getattr(self,'_'.join(cmd))}) for cmd in [
-				cmd.split("_",2) for cmd in dir(self) if cmd.startswith("acmd_")]])}
 
 
 	def do_command(self,c,e,cmd,source):
@@ -112,7 +131,7 @@ class IcyBotCommands():
 					if re.fullmatch(user,userhost) is not None:
 						alev=max(alev,int(self._access[user]))
 				if alev>=cinf["access"]:
-					msg=cinf["func"](c,e,args)
+					msg=cinf["func"](self,c,e,args)
 				else:
 					msg="?ACCESS DENIED"
 			else:
@@ -123,114 +142,143 @@ class IcyBotCommands():
 		finally:
 			for line in msg.split("\n"):
 				self._bot.irc(source,line)
-	
-	def cmd_np(self,c,e,args):
-		return "Now Playing: %s"%self._bot._icy.tit().title()
-	
-	def acmd_2_chan(self,c,e,args):
-		self._bot.setcontext(args[0])
-		return "set context to %s."%args[0]
 
-	def acmd_2_here(self,c,e,args):
-		self._bot.setcontext(None)
-		return "set context to follow source."
+@icy_command
+def np(bot,c,e,args):
+	return "Now Playing: %s"%bot._bot._icy.tit().title()
 
-	def acmd_2_wall(self,c,e,args):
-		self._bot.setcontext('allchan')
-		return "set context to all channels."
+@icy_command(access=2)
+def chan(bot,c,e,args):
+	bot._bot.setcontext(args[0])
+	return "set context to %s."%args[0]
 
-	def cmd_nl(self,c,e,args):
-		return "At least %s hoopty froods currently listening to the Horizon Singularity Sound!"%(((self._bot._icy.ice().stats())["listeners"])[1])
+@icy_command(access=2)
+def here(bot,c,e,args):
+	bot._bot.setcontext(None)
+	return "set context to follow source."
 
-	def cmd_ping(self,c,e,args):
-		return "Pong"
+@icy_command(access=2)
+def wall(bot,c,e,args):
+	bot._bot.setcontext('allchan')
+	return "set context to all channels."
 
-	def cmd_time(self,c,e,args):
-		return "Date: %s"%(str(datetime.now()))
+@icy_command
+def nl(bot,c,e,args):
+	return "At least %s hoopty froods currently listening to the Horizon Singularity Sound!"%(((bot._bot._icy.ice().stats())["listeners"])[1])
 
-	def cmd_coinflip(self,c,e,args):
-		return "Your coin flipped %s"%(["heads","tails"][int(random.random()*2)])
+@icy_command
+def ping(bot,c,e,args):
+	return "Pong"
 
-	def acmd_1_join(self,c,e,args):
-		for chan in args:
-			c.join(chan)
-			self._bot.say(chan,self._bot._joinMsg)
-		return "Joined %s."%(", ".join(args))
+@icy_command
+def time(bot,c,e,args):
+	return "Date: %s"%(str(datetime.now()))
 
-	def acmd_1_part(self,c,e,args):
-		for chan in args:
-				c.part(chan)
-		return "Parted %s."%(", ".join(args))
+@icy_command
+def coinflip(bot,c,e,args):
+	return "Your coin flipped %s"%(["heads","tails"][int(random.random()*2)])
 
-	def cmd_motd(self,c,e,args):
-		return "Hello! I am "+ self._bot._nick + " made partially by " + ", ".join(self._bot._authors) + ", and many others who developed the F/OSS stack underneath me!"
+@icy_command(access=1)
+def join(bot,c,e,args):
+	for chan in args:
+		c.join(chan)
+		bot._bot.say(chan,bot._bot._joinMsg)
+	return "Joined %s."%(", ".join(args))
 
-	def cmix_stop(self,then=""):
-		os.system('chromix-too rm audible;%s'%(then))
+@icy_command(access=1)
+def part(bot,c,e,args):
+	for chan in args:
+			c.part(chan)
+	return "Parted %s."%(", ".join(args))
 
-	def acmd_2_stop(self,c,e,args):
-		self.cmix_stop()
-		return "Stopping anything currently playing..."
+@icy_command
+def motd(bot,c,e,args):
+	return "Hello! I am "+ bot._bot._nick + " made partially by " + ", ".join(bot._bot._authors) + ", and many others who developed the F/OSS stack underneath me!"
 
-	def acmd_2_yt(self,c,e,args):
-		(options, args)=self.ytparser.parse_known_args(args)
-		if type(options)==str:
-			return options
-		video=youtube_search(' '.join(options.keywords+args),int(options.offset[0]),order=options.sort[0],length=options.length[0])
-		return "Found %s on YouTube.  %s"%(video,self.acmd_2_play(c,e,[video])) if video is not None else "Nothing found on YouTube for %s"%(' '.join(options.keywords+args))
+def cmix_stop(then=""):
+	os.system('chromix-too rm audible;%s'%(then))
 
-	def acmd_2_play(self,c,e,args):
-		url=' '.join(args).replace('"','\\"')
-		self.cmix_stop('chromix-too open "%s"'%url)
-		return "It should be playing momentarily..."
+@icy_command(access=2)
+def stop(bot,c,e,args):
+	cmix_stop()
+	return "Stopping anything currently playing..."
 
-	def acmd_2_me(self,c,e,args):
-		return '/me '+' '.join(args)
+@icy_command(access=2)
+def yt(bot,c,e,args):
+	(options, args)=bot.ytparser.parse_known_args(args)
+	if type(options)==str:
+		return options
+	video=youtube_search(' '.join(options.keywords+args),int(options.offset[0]),order=options.sort[0],length=options.length[0])
+	return "Found %s on YouTube.  %s"%(video,play(bot,c,e,[video])) if video is not None else "Nothing found on YouTube for %s"%(' '.join(options.keywords+args))
 
-	def acmd_2_say(self,c,e,args):
-		return '/say '+' '.join(args)
+@icy_command(access=2)
+def play(bot,c,e,args):
+	url=' '.join(args).replace('"','\\"')
+	cmix_stop('chromix-too open "%s"'%url)
+	return "It should be playing momentarily..."
 
-	def acmd_2_rebot(self,c,e,args):
-		self._reload()
-		return "?UNREACHABLE MESSAGE"
+@icy_command(access=2)
+def me(bot,c,e,args):
+	return '/me '+' '.join(args)
 
-	def acmd_2_reload(self,c,e,args):
-		self._reload(1)
-		return "Reloading ICYBot Commands..."
+@icy_command(access=2)
+def say(bot,c,e,args):
+	return '/say '+' '.join(args)
 
-	def acmd_3_eval(self,c,e,args):
-		try:
-			return str(eval(u" ".join(args).replace('%n',"\n").replace('%%','%')))
-		except Exception as e:
-			return str(e)
+@icy_command(access=2)
+def rebot(bot,c,e,args):
+	bot._reload()
+	return "?UNREACHABLE MESSAGE"
 
-	def acmd_3_exec(self,c,e,args):
-		with stdoutIO() as s:
-			exec(u" ".join(args).replace('%n',"\n").replace('%%','%'))
-		output = s.getvalue()
-		print(output)
-		return output
+@icy_command(access=2)
+def reload(bot,c,e,args):
+	bot._reload(1)
+	return "Reloading ICYBot Commands..."
 
-	def cmd_help(self,c,e,args):
-		return "Commands supported w/ access-level required, 0 is anyone: %s"%(str(["(%d):%s"%(self._cmd[cmd]["access"],cmd) for cmd in self._cmd.keys()]))
-	
-	def cmd_access(self,c,e,args):
-		return "Access levels granted by regexes: %s"%(str(self._access))
+@icy_command(access=3)
+def eval(bot,c,e,args):
+	try:
+		return str(eval(u" ".join(args).replace('%n',"\n").replace('%%','%')))
+	except Exception as e:
+		return str(e)
 
-	def cmd_lucy(self,c,e,args):
-		return "[rattling the chains reveals a message]: %s"%(xt.fromstring(requests.get('http://tymestl.org/~rtmf/lucy.php').text).find("body").find("p").find("div").text)
-	
-	def cmd_ad(self,c,e,args):
-		return self.cmd_advert(c,e,args)
-	
-	def cmd_rfh(self,c,e,args):
-		return self.cmd_advert(c,e,args)
+@icy_command(access=3)
+def exec(bot,c,e,args):
+	with stdoutIO() as s:
+		exec(u" ".join(args).replace('%n',"\n").replace('%%','%'))
+	output = s.getvalue()
+	print(output)
+	return output
 
-	def cmd_advert(self,c,e,args):
-		return "rfh: ♪Radio Free Horizon is ON THE AIR♪ | http://rfh.tymestl.org/500.ogg [HQ-500kbit vorbis] | http://rfh.tymestl.org/320.mp3  [LQ-320kbit mp3] | \"DJ\" RtMF in the...uh...patchbay - feel free to bug her with suggestions! | totally amateur | sometimes  awesome | often crashy | always weird | we're Musick for all Magick | {[Dark]Ice|Broad}casting direct from the Horizon  Singularity | ☮ ♥ 🌈 "
-	def acmd_1_p(self,c,e,args):
-		return self.acmd_2_play(c,e,args)
-	def acmd_2_y(self,c,e,args):
-		return self.acmd_2_yt(c,e,args)
-	def acmd_2_o(self,c,e,args):
-		return self.acmd_2_yo(c,e,args)
+@icy_command
+def help(bot,c,e,args):
+	return "Commands supported w/ access-level required, 0 is anyone: %s"%(str(["(%d):%s"%(bot._cmd[cmd]["access"],cmd) for cmd in bot._cmd.keys()]))
+
+@icy_command
+def access(bot,c,e,args):
+	return "Access levels granted by regexes: %s"%(str(bot._access))
+
+@icy_command
+def lucy(bot,c,e,args):
+	return "[rattling the chains reveals a message]: %s"%(xt.fromstring(requests.get('http://tymestl.org/~rtmf/lucy.php').text).find("body").find("p").find("div").text)
+
+@icy_command
+def ad(bot,c,e,args):
+	return advert(bot,e,args)
+
+@icy_command
+def rfh(bot,c,e,args):
+	return advert(bot,c,e,args)
+
+@icy_command
+def advert(bot,c,e,args):
+	return "rfh: ♪Radio Free Horizon is ON THE AIR♪ | http://rfh.tymestl.org/500.ogg [HQ-500kbit vorbis] | http://rfh.tymestl.org/320.mp3  [LQ-320kbit mp3] | \"DJ\" RtMF in the...uh...patchbay - feel free to bug her with suggestions! | totally amateur | sometimes  awesome | often crashy | always weird | we're Musick for all Magick | {[Dark]Ice|Broad}casting direct from the Horizon  Singularity | ☮ ♥ 🌈 "
+@icy_command(access=1)
+def p(bot,c,e,args):
+	return play(bot,c,e,args)
+@icy_command(access=2)
+def y(bot,c,e,args):
+	return yt(bot,c,e,args)
+@icy_command(access=2)
+def o(bot,c,e,args):
+	return yo(bot,c,e,args)
