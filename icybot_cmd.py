@@ -113,7 +113,7 @@ class IcyBotCommands():
 		self.ytparser=cmdArgParser("yt")
 		self.ytparser.add_argument("-o","--offset",nargs=1,dest="offset",default=[0],help="return search result NUM (starting from 0)",metavar="NUM",type=int)
 		self.ytparser.add_argument("keywords",nargs="*",default=[],metavar="KEYWORD",help="keywords for the search")
-		self.ytparser.add_argument("-s","--sort",metavar=("ORDER"), nargs=1,default=["date"],choices=["date","rating","relevance","title","videoCount","viewCount"],help="sort order for results",dest="sort")
+		self.ytparser.add_argument("-s","--sort",metavar=("ORDER"), nargs=1,default=["relevance"],choices=["date","rating","relevance","title","videoCount","viewCount"],help="sort order for results",dest="sort")
 		self.ytparser.add_argument("-l","--length",nargs=1,metavar=("LEN"),default=["any"],choices=["any","long","medium","short"],dest="length")
 
 
@@ -236,17 +236,23 @@ def reload(bot,c,e,args):
 	return "Reloading ICYBot Commands..."
 
 @icy_command(access=3)
-def eval(bot,c,e,args):
+def pyev(bot,c,e,args):
 	try:
 		return str(eval(u" ".join(args).replace('%n',"\n").replace('%%','%')))
 	except Exception as e:
 		return str(e)
 
 @icy_command(access=3)
-def exec(bot,c,e,args):
+def pyex(bot,c,e,args):
 	with stdoutIO() as s:
 		exec(u" ".join(args).replace('%n',"\n").replace('%%','%'))
 	output = s.getvalue()
+	print(output)
+	return output
+
+@icy_command(access=3)
+def shex(bot,c,e,args):
+	output=os.popen(u" ".join(args).replace('%n','\n').replace('%%','%')).read()
 	print(output)
 	return output
 
