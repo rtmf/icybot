@@ -270,7 +270,7 @@ def lucy(bot,c,e,args):
 
 @icy_command
 def ad(bot,c,e,args):
-	return advert(bot,e,args)
+	return advert(bot,c,e,args)
 
 @icy_command
 def rfh(bot,c,e,args):
