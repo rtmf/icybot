@@ -10,13 +10,13 @@ class ConfigValue:
     def val(self):
         return self._val
     def load(self):
-        print("load[_%s]:%s"%(self._name,str(self.des())))
+        #print("load[_%s]:%s"%(self._name,str(self.des())))
         setattr(self._obj,"_%s"%self._name,self.des())
-        print (type(self._obj))
+        #print (type(self._obj))
     def save(self):
         self.ser(getattr(self._obj,"_%s"%self._name))
-        print("save[_%s]:%s"%(self._name,str(self.des())))
-        print (type(self._obj))
+        #print("save[_%s]:%s"%(self._name,str(self.des())))
+        #print (type(self._obj))
     def ent(self):
         return self.__ent__()
     def foc(self,node,name,**attr):

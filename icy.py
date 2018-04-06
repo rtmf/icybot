@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# vim:sw=4:ts=4:noexpandtab
+# vim: sw=2 ts=2 noet syntax=python:
 import icybot_cmd
 import icybot_icy
 import icybot_bot
@@ -15,7 +15,7 @@ class IcyTitles():
 		self._timer=None
 		self._titles=None
 		self.printTitles()
-	def title(self):
+	def poll(self):
 			titles=self._icy.ice().title()
 			if len(titles)==0:
 				titles="Nothing Playing :("
@@ -23,13 +23,17 @@ class IcyTitles():
 				titles=titles[0][1]
 			if titles!=self._titles:
 				self._titles=titles
+				return True
+			return False
 #				for bot in self._icy._bot:
 #					for chan in bot._channels:
 #						bot.do(chan,"is now playing: %s"%titles)
+	def title(self):
 			return self._titles
 	def printTitles(self):
 		try:
-			print(self.title())
+			if self.poll():
+				print(self.title()) 
 		except:
 			print("ERROR")
 		finally:
@@ -56,7 +60,7 @@ class IcyTitles():
 class Icy:
 	def runBot(self,ircbot):
 		try:
-			print(ircbot._host)
+			#print(ircbot._host)
 			ircbot.start()
 		except:
 			self.reload_func()
@@ -107,7 +111,7 @@ class Icy:
 		if (cmdonly==1):
 			importlib.reload(icybot_cmd)
 			for ircbot in self.bots():
-				ircbot._cmd=icybot_cmd.IcyBotCommands(ircbot,self.reload_func)
+				ircbot._cmd=icybot_cmd.IcyBotCommands(ircbot,self)
 		else:
 			self.nobots()
 			self.notit()

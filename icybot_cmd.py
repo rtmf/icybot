@@ -81,7 +81,7 @@ def stdoutIO(stdout=None):
 
 global _cmd
 def icy_register_command(access,func):
-	print("icy_register_command(%d,%s)"%(access,repr(func)))
+	#print("icy_register_command(%d,%s)"%(access,repr(func)))
 	global _cmd
 	cinf={
 		"func":func,
