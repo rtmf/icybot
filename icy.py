@@ -6,6 +6,7 @@ import icybot_bot
 import icybot_cfg
 import threading
 import importlib
+import time
 
 class IcyTitles():
 	def __init__(self,icy):
@@ -33,7 +34,7 @@ class IcyTitles():
 	def printTitles(self):
 		try:
 			if self.poll():
-				print(self.title()) 
+				print("[%s]: %s"%(time.ctime(),self.title()))
 		except:
 			print("ERROR")
 		finally:
