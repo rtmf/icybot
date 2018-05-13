@@ -5,7 +5,7 @@ import icybot_cmd
 import threading
 class RFHBot(irc.bot.SingleServerIRCBot,icybot_cfg.Configurable):
 	def __schema__(self):
-		self.value("host").value("port","6667").value("password").list("channels","channel").value("nick").value("name").value("gangsign","frozen").value("joinMsg","Ohai").list("authors","author").dict("access","user","level").value("prefix","!")
+		self.value("host").value("port","6667").value("password").list("channels","channel").value("nick").value("name").value("joinMsg","Ohai").list("authors","author").dict("access","user","level").value("prefix","!")
 	def runthread(self):
 		if self._thread is not None:
 			self.die()

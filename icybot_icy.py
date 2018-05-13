@@ -1,5 +1,6 @@
 import icybot_cfg
 from icybot_xml import s2x,x2d
+from lxml import etree as xt
 import requests
 class Icecast(icybot_cfg.Configurable):
     def __schema__(self):
@@ -14,19 +15,24 @@ class Icecast(icybot_cfg.Configurable):
         return [source.get("mount") for source in s2x(self.call("listmounts").text).findall("source")]
 
     def each(self,function,args={}):
-        return [(mount,self.call(function,args=args,mount=mount)) for mount in self.mounts()]
+        return (lambda el: [
+            (lambda el,mo,re: 
+                xt.SubElement(el,"mount",{"path":mount}).append(re)
+                )(el,mount,s2x(self.call(function,args=args,mount=mount).text))
+            for mount in self.mounts()] and el)(xt.Element(function))
 
     def song(self,song):
         return self.each(function="metadata",args={"mode":"updinfo","song":song})
-
-    def status(self):
-        return [(mount[0],s2x(mount[1].text)) for mount in self.each(function="stats")]
 
     def stats(self):
         return x2d(s2x(self.call('stats').text))
 
     def title(self):
-        return [(mount[0],mount[1].find("source").find("title").text) for mount in self.status() if mount[1].find("source").find("title") is not None]
+        return self.query("title")
+
+    def query(self,query):
+        return {f.getparent().getparent().getparent().get("path"):f.text for f in
+                self.each("stats").xpath("//mount/icestats/source/%s"%(query))}
 
     def clients(self):
         return self.each(function="listclients")

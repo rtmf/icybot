@@ -21,6 +21,7 @@ from apiclient.errors import HttpError
 DEVELOPER_KEY = "AIzaSyA7RZ3GBfd97qIt6cBHnYQrnkY7mYgyt0c"
 YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
+_cmd={}
 class cmdArgParser(argparse.ArgumentParser):
 	def parse_known_args(self,args):
 		ret=None
@@ -79,19 +80,14 @@ def stdoutIO(stdout=None):
 	yield stdout
 	sys.stdout = old
 
-global _cmd
 def icy_register_command(access,func):
-	#print("icy_register_command(%d,%s)"%(access,repr(func)))
+	print("icy_register_command(%d,%s)"%(access,repr(func)))
 	global _cmd
 	cinf={
 		"func":func,
 		"access":access
 		}
-	global _cmd
-	try:
-		_cmd[func.__name__]=cinf
-	except NameError:
-		_cmd={func.__name__:cinf}
+	_cmd[func.__name__]=cinf
 def icy_command(access=0):
 	if callable(access):
 		return (icy_command_decorator(0))(access)
@@ -131,14 +127,15 @@ class IcyBotCommands():
 					if re.fullmatch(user,userhost) is not None:
 						alev=max(alev,int(self._access[user]))
 				if alev>=cinf["access"]:
+					print("calling the function.")
 					msg=cinf["func"](self,c,e,args)
 				else:
-					msg="?ACCESS DENIED"
+					msg="/say ?ACCESS DENIED"
 			else:
-				msg="?SYNTAX ERROR"
+				msg="/say ?SYNTAX ERROR"
 		except Exception as e:
 			traceback.print_exc()
-			msg="?INTERNAL ERROR - %s"%str(e)
+			msg="/say ?INTERNAL ERROR - %s"%str(e)
 		finally:
 			for line in msg.split("\n"):
 				self._bot.irc(source,line)
@@ -164,7 +161,8 @@ def wall(bot,c,e,args):
 
 @icy_command
 def nl(bot,c,e,args):
-	return "At least %s hoopty froods currently listening to the Horizon Singularity Sound!"%(((bot._bot._icy.ice().stats())["listeners"])[1])
+	return "At least [ %s ] hoopty froods currently listening to the Horizon Singularity Sound!"%(
+			" , ".join(["%s:%s"%(k,v) for k,v in (bot._bot._icy.ice()).query("listeners").items()]))
 
 @icy_command
 def ping(bot,c,e,args):
@@ -195,8 +193,11 @@ def part(bot,c,e,args):
 def motd(bot,c,e,args):
 	return "Hello! I am "+ bot._bot._nick + " made partially by " + ", ".join(bot._bot._authors) + ", and many others who developed the F/OSS stack underneath me!"
 
-def cmix_stop(then=""):
-	os.system('chromix-too rm audible;%s'%(then))
+def cmix_stop(then=None):
+	print(then)
+	os.system('chromix-too rm audible')
+	if then is not None:
+		os.system(then)
 
 @icy_command(access=2)
 def stop(bot,c,e,args):

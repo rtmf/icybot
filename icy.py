@@ -7,6 +7,7 @@ import icybot_cfg
 import threading
 import importlib
 import time
+import traceback
 
 class IcyTitles():
 	def __init__(self,icy):
@@ -21,7 +22,8 @@ class IcyTitles():
 			if len(titles)==0:
 				titles="Nothing Playing :("
 			else:
-				titles=titles[0][1]
+				titles=titles[list(titles.keys())[0]]
+				titles="[ %s ] - %s"%((" , ".join(["%s:%s"%(k,v) for k,v in (self._icy.ice()).query("listeners").items()])),titles)
 			if titles!=self._titles:
 				self._titles=titles
 				return True
@@ -36,6 +38,7 @@ class IcyTitles():
 			if self.poll():
 				print("[%s]: %s"%(time.ctime(),self.title()))
 		except:
+			traceback.print_exc()
 			print("ERROR")
 		finally:
 			if self._timer is not None:
