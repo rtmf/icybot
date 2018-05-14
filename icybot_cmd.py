@@ -14,6 +14,7 @@ import argparse
 import traceback
 from apiclient.discovery import build
 from apiclient.errors import HttpError
+import icybot_cfg
 # Set DEVELOPER_KEY to the API key value from the APIs & auth > Registered apps
 # tab of
 #   https://cloud.google.com/console
@@ -42,9 +43,9 @@ class cmdArgParser(argparse.ArgumentParser):
 		self.errorMessage=message
 		raise TypeError
 
-def youtube_search(query,offset=0,length="long",order="date"):
+def youtube_search(query,devkey,offset=0,length="long",order="date"):
 	youtube = build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION,
-		developerKey=DEVELOPER_KEY)
+		developerKey=devkey)
 
 	# Call the search.list method to retrieve results matching the specified
 	# query term.
@@ -99,7 +100,9 @@ def icy_command_decorator(access):
 		return func
 	return icy_decorator
 	
-class IcyBotCommands():
+class IcyBotCommands(icybot_cfg.Configurable):
+	def __schema__(self):
+		self.value("devkey")
 	def __init__(self,bot,reload_func):
 		global _cmd
 		self._cmd=_cmd
@@ -111,6 +114,7 @@ class IcyBotCommands():
 		self.ytparser.add_argument("keywords",nargs="*",default=[],metavar="KEYWORD",help="keywords for the search")
 		self.ytparser.add_argument("-s","--sort",metavar=("ORDER"), nargs=1,default=["relevance"],choices=["date","rating","relevance","title","videoCount","viewCount"],help="sort order for results",dest="sort")
 		self.ytparser.add_argument("-l","--length",nargs=1,metavar=("LEN"),default=["any"],choices=["any","long","medium","short"],dest="length")
+		icybot_cfg.Configurable.__init__(self,bot._conf,"youtube",0)
 
 
 	def do_command(self,c,e,cmd,source):
@@ -209,7 +213,7 @@ def yt(bot,c,e,args):
 	(options, args)=bot.ytparser.parse_known_args(args)
 	if type(options)==str:
 		return options
-	video=youtube_search(' '.join(options.keywords+args),int(options.offset[0]),order=options.sort[0],length=options.length[0])
+	video=youtube_search(' '.join(options.keywords+args),bot._devkey,int(options.offset[0]),order=options.sort[0],length=options.length[0])
 	return "Found %s on YouTube.  %s"%(video,play(bot,c,e,[video])) if video is not None else "Nothing found on YouTube for %s"%(' '.join(options.keywords+args))
 
 @icy_command(access=2)
