@@ -15,11 +15,12 @@ class Icecast(icybot_cfg.Configurable):
         return [source.get("mount") for source in s2x(self.call("listmounts").text).findall("source")]
 
     def each(self,function,args={}):
-        return (lambda el: [
+        el=xt.Element(function)
+        for mount in self.mounts():
             (lambda el,mo,re: 
                 xt.SubElement(el,"mount",{"path":mount}).append(re)
                 )(el,mount,s2x(self.call(function,args=args,mount=mount).text))
-            for mount in self.mounts()] and el)(xt.Element(function))
+        return el
 
     def song(self,song):
         return self.each(function="metadata",args={"mode":"updinfo","song":song})
