@@ -131,7 +131,6 @@ class IcyBotCommands(icybot_cfg.Configurable):
 					if re.fullmatch(user,userhost) is not None:
 						alev=max(alev,int(self._access[user]))
 				if alev>=cinf["access"]:
-					print("calling the function.")
 					msg=cinf["func"](self,c,e,args)
 				else:
 					msg="/say ?ACCESS DENIED"
