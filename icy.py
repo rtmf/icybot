@@ -16,13 +16,16 @@ class IcyTitles():
 		self._running=True
 		self._timer=None
 		self._titles=None
+		self._bare=""
 		self.printTitles()
 	def poll(self):
 			titles=self._icy.ice().title()
 			if len(titles)==0:
 				titles="Nothing Playing :("
+				self._bare=""
 			else:
 				titles=titles[list(titles.keys())[0]]
+				self._bare=titles
 				titles="[ %s ] - %s"%((" , ".join(["%s:%s"%(k,v) for k,v in (self._icy.ice()).query("listeners").items()])),titles)
 			if titles!=self._titles:
 				self._titles=titles
@@ -32,7 +35,9 @@ class IcyTitles():
 #					for chan in bot._channels:
 #						bot.do(chan,"is now playing: %s"%titles)
 	def title(self):
-			return self._titles
+		return self._titles
+	def bare(self):
+		return self._bare
 	def printTitles(self):
 		try:
 			if self.poll():
@@ -115,7 +120,7 @@ class Icy:
 		if (cmdonly==1):
 			importlib.reload(icybot_cmd)
 			for ircbot in self.bots():
-				ircbot._cmd=icybot_cmd.IcyBotCommands(ircbot,self)
+				ircbot._cmd=icybot_cmd.IcyBotCommands(ircbot,self.reload_func)
 		else:
 			self.nobots()
 			self.notit()

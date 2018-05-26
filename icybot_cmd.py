@@ -111,6 +111,7 @@ class IcyBotYoutube(icybot_cfg.Configurable):
 		self.ytparser.add_argument("-s","--sort",metavar=("ORDER"), nargs=1,default=["relevance"],choices=["date","rating","relevance","title","videoCount","viewCount"],help="sort order for results",dest="sort")
 		self.ytparser.add_argument("-l","--length",nargs=1,metavar=("LEN"),default=["any"],choices=["any","long","medium","short"],dest="length")
 		icybot_cfg.Configurable.__init__(self,cmds._bot._conf,"youtube",0)
+
 class IcyBotDB(icybot_cfg.Configurable):
 	def __schema__(self):
 		self.value("username").value("password").value("database")
@@ -118,10 +119,18 @@ class IcyBotDB(icybot_cfg.Configurable):
 		self._cmds=cmds
 		icybot_cfg.Configurable.__init__(self,self._cmds._bot._conf,"db",0)
 		self._cc=mc.Connect(user=self._username,password=self._password,database=self._database)
-		self._cc.cmd_query("CREATE TABLE IF NOT EXISTS criticism ( title varchar(255) not null, liked  int(7) not null default 0);")
+		self._cc.cmd_query("CREATE TABLE IF NOT EXISTS criticism ( title CHAR(127) not null unique , liked INTEGER not null default 0) CHARSET=utf8mb4;")
 	def crit(self,title,liked=1):
-		title=title.replace("'","’").replace("\\","\\\\")
-		return self._cc.cmd_query("INSERT INTO criticism SET title='%s', liked=%d on duplicate key update title='%s', liked=liked+%d;"%((title,liked)*2))
+		title=(title.replace("'","’").replace("\\","\\\\"))[0:127]
+		for result in self._cc.cmd_query_iter("INSERT INTO criticism SET title='%s', liked=%d on duplicate key update title='%s', liked=liked+%d;SELECT liked FROM criticism WHERE title='%s';"%(((title,liked)*3)[:-1])):
+			if 'columns' in result:
+				columns = result['columns']
+				rows=self._cc.get_rows()
+				print(rows)
+				if len(rows[0]):
+					value=int(rows[0][0][0])
+					return "Set liked value for -=|[%s]|=- to %d."%(title,value)
+		return "Something went db'ly wrong."
 
 class IcyBotCommands:
 	def __init__(self,bot,reload_func):
@@ -164,11 +173,11 @@ def np(bot,c,e,args):
 
 @icy_command
 def up(bot,c,e,args):
-	return str(bot._db.crit(bot._bot._icy.tit().title(),1))
+	return str(bot._db.crit(bot._bot._icy.tit().bare(),1))
 
 @icy_command
 def dn(bot,c,e,args):
-	return str(bot._db.crit(bot._bot._icy.tit().title(),-1))
+	return str(bot._db.crit(bot._bot._icy.tit().bare(),-1))
 
 @icy_command(access=2)
 def chan(bot,c,e,args):
