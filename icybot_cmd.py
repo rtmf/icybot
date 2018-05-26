@@ -14,6 +14,7 @@ import argparse
 import traceback
 from apiclient.discovery import build
 from apiclient.errors import HttpError
+from mysql import connector as mc
 import icybot_cfg
 # Set DEVELOPER_KEY to the API key value from the APIs & auth > Registered apps
 # tab of
@@ -99,24 +100,38 @@ def icy_command_decorator(access):
 		icy_register_command(access,func)
 		return func
 	return icy_decorator
-	
-class IcyBotCommands(icybot_cfg.Configurable):
+class IcyBotYoutube(icybot_cfg.Configurable):
 	def __schema__(self):
 		self.value("devkey")
+	def __init__(self,cmds):
+		self._cmds=cmds
+		self.ytparser=cmdArgParser("yt")
+		self.ytparser.add_argument("-o","--offset",nargs=1,dest="offset",default=[0],help="return search result NUM (starting from 0)",metavar="NUM",type=int)
+		self.ytparser.add_argument("keywords",nargs="*",default=[],metavar="KEYWORD",help="keywords for the search")
+		self.ytparser.add_argument("-s","--sort",metavar=("ORDER"), nargs=1,default=["relevance"],choices=["date","rating","relevance","title","videoCount","viewCount"],help="sort order for results",dest="sort")
+		self.ytparser.add_argument("-l","--length",nargs=1,metavar=("LEN"),default=["any"],choices=["any","long","medium","short"],dest="length")
+		icybot_cfg.Configurable.__init__(self,cmds._bot._conf,"youtube",0)
+class IcyBotDB(icybot_cfg.Configurable):
+	def __schema__(self):
+		self.value("username").value("password").value("database")
+	def __init__(self,cmds):
+		self._cmds=cmds
+		icybot_cfg.Configurable.__init__(self,self._cmds._bot._conf,"db",0)
+		self._cc=mc.Connect(user=self._username,password=self._password,database=self._database)
+		self._cc.cmd_query("CREATE TABLE IF NOT EXISTS criticism ( title varchar(255) not null, liked  int(7) not null default 0);")
+	def crit(self,title,liked=1):
+		title=title.replace("'","’").replace("\\","\\\\")
+		return self._cc.cmd_query("INSERT INTO criticism SET title='%s', liked=%d on duplicate key update title='%s', liked=liked+%d;"%((title,liked)*2))
+
+class IcyBotCommands:
 	def __init__(self,bot,reload_func):
 		global _cmd
 		self._cmd=_cmd
 		self._bot=bot
 		self._reload=reload_func
 		self._access=bot._access
-		self.ytparser=cmdArgParser("yt")
-		self.ytparser.add_argument("-o","--offset",nargs=1,dest="offset",default=[0],help="return search result NUM (starting from 0)",metavar="NUM",type=int)
-		self.ytparser.add_argument("keywords",nargs="*",default=[],metavar="KEYWORD",help="keywords for the search")
-		self.ytparser.add_argument("-s","--sort",metavar=("ORDER"), nargs=1,default=["relevance"],choices=["date","rating","relevance","title","videoCount","viewCount"],help="sort order for results",dest="sort")
-		self.ytparser.add_argument("-l","--length",nargs=1,metavar=("LEN"),default=["any"],choices=["any","long","medium","short"],dest="length")
-		icybot_cfg.Configurable.__init__(self,bot._conf,"youtube",0)
-
-
+		self._yt=IcyBotYoutube(self)
+		self._db=IcyBotDB(self)
 	def do_command(self,c,e,cmd,source):
 		msg="?REDO FROM START"
 		try:
@@ -146,6 +161,14 @@ class IcyBotCommands(icybot_cfg.Configurable):
 @icy_command
 def np(bot,c,e,args):
 	return "Now Playing: %s"%bot._bot._icy.tit().title()
+
+@icy_command
+def up(bot,c,e,args):
+	return str(bot._db.crit(bot._bot._icy.tit().title(),1))
+
+@icy_command
+def dn(bot,c,e,args):
+	return str(bot._db.crit(bot._bot._icy.tit().title(),-1))
 
 @icy_command(access=2)
 def chan(bot,c,e,args):
@@ -209,10 +232,10 @@ def stop(bot,c,e,args):
 
 @icy_command(access=2)
 def yt(bot,c,e,args):
-	(options, args)=bot.ytparser.parse_known_args(args)
+	(options, args)=bot._yt.ytparser.parse_known_args(args)
 	if type(options)==str:
 		return options
-	video=youtube_search(' '.join(options.keywords+args),bot._devkey,int(options.offset[0]),order=options.sort[0],length=options.length[0])
+	video=youtube_search(' '.join(options.keywords+args),bot._yt._devkey,int(options.offset[0]),order=options.sort[0],length=options.length[0])
 	return "Found %s on YouTube.  %s"%(video,play(bot,c,e,[video])) if video is not None else "Nothing found on YouTube for %s"%(' '.join(options.keywords+args))
 
 @icy_command(access=2)
