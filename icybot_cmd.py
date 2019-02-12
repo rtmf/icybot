@@ -52,8 +52,9 @@ def youtube_search(query,devkey,offset=0,length="long",order="date"):
 	# query term.
 	search_response = youtube.search().list(
 		q=query,
+		safeSearch="none",
 		part="snippet,id",
-		maxResults=50,
+		#maxResults=50,
 		order=order,
 		type="video",
 		videoDuration=length
@@ -89,7 +90,7 @@ def icy_register_command(access,func):
 		"func":func,
 		"access":access
 		}
-	_cmd[func.__name__]=cinf
+	_cmd[func.__name__.lower()]=cinf
 def icy_command(access=0):
 	if callable(access):
 		return (icy_command_decorator(0))(access)
@@ -271,20 +272,20 @@ def reload(bot,c,e,args):
 	bot._reload(1)
 	return "Reloading ICYBot Commands..."
 
-@icy_command(access=3)
-def pyev(bot,c,e,args):
-	try:
-		return str(eval(u" ".join(args).replace('%n',"\n").replace('%%','%')))
-	except Exception as e:
-		return str(e)
+#@icy_command(access=3)
+#def pyev(bot,c,e,args):
+#	try:
+#		return str(eval(u" ".join(args).replace('%n',"\n").replace('%%','%')))
+#	except Exception as e:
+#		return str(e)
 
-@icy_command(access=3)
-def pyex(bot,c,e,args):
-	with stdoutIO() as s:
-		exec(u" ".join(args).replace('%n',"\n").replace('%%','%'))
-	output = s.getvalue()
-	print(output)
-	return output
+#@icy_command(access=3)
+#def pyex(bot,c,e,args):
+#	with stdoutIO() as s:
+#		exec(u" ".join(args).replace('%n',"\n").replace('%%','%'))
+#	output = s.getvalue()
+#	print(output)
+#	return output
 
 @icy_command(access=3)
 def shex(bot,c,e,args):
