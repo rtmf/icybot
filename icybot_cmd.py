@@ -287,11 +287,11 @@ def reload(bot,c,e,args):
 #	print(output)
 #	return output
 
-@icy_command(access=3)
-def shex(bot,c,e,args):
-	output=os.popen(u" ".join(args).replace('%n','\n').replace('%%','%')).read()
-	print(output)
-	return output
+#@icy_command(access=3)
+#def shex(bot,c,e,args):
+#	output=os.popen(u" ".join(args).replace('%n','\n').replace('%%','%')).read()
+#	print(output)
+#	return output
 
 @icy_command
 def help(bot,c,e,args):

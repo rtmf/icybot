@@ -102,6 +102,11 @@ class RFHBot(irc.bot.SingleServerIRCBot,icybot_cfg.Configurable):
 	def on_nicknameinuse(self, c, e):
 		c.nick(c.get_nickname() + "_")
 		c.privmsg("nickserv", "GHOST %s %s" % (self._nick, self._password))
+		c.privmsg("nickserv", "RELEASE %s %s" % (self._nick, self._password))
+		c.nick(c.get_nickname())
+		for channel in self._channels:
+			c.join(channel)
+			self.say(channel,self._joinMsg)
 	
 	def on_privmsg(self, c, e):
 		self._cmd.do_command(c, e, e.arguments[0].lstrip(), e.source.nick)
